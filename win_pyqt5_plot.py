@@ -298,7 +298,7 @@ class ShipTrackVisualizer(QMainWindow):
         for file in csv_files:
             try:
                 df = pd.read_csv(os.path.join(folder_path, file))
-                if {'latitude', 'longitude', 'speed', 'heading', 'type'}.issubset(df.columns):
+                if {'lat', 'lon', 'sog', 'cog', 'label'}.issubset(df.columns):
                     ship_id = file.split('.')[0]
                     self.ship_data[ship_id] = df
             except Exception as e:
@@ -317,7 +317,7 @@ class ShipTrackVisualizer(QMainWindow):
         
         ship_types = {}
         for df in self.ship_data.values():
-            ship_type = df['type'].mode()[0] if 'type' in df.columns else '未知'
+            ship_type = df['label'].mode()[0] if 'label' in df.columns else '未知'
             ship_types[ship_type] = ship_types.get(ship_type, 0) + 1
         
         type_info = "\n".join([f"{k}: {v}艘" for k, v in ship_types.items()])
@@ -359,11 +359,11 @@ class ShipTrackVisualizer(QMainWindow):
         
         # 绘制每条轨迹
         for ship_id, df in self.ship_data.items():
-            ship_type = df['type'].mode()[0] if 'type' in df.columns else 'default'
+            ship_type = df['label'].mode()[0] if 'label' in df.columns else 'default'
             color = color_map.get(ship_type.lower(), color_map['default'])
             
             # 创建轨迹线
-            points = list(zip(df['latitude'], df['longitude']))
+            points = list(zip(df['lat'], df['lon']))
             folium.PolyLine(
                 points,
                 color=color,
@@ -421,7 +421,7 @@ class ShipTrackVisualizer(QMainWindow):
             # 检查是否有轨迹点位于区域内
             in_area = False
             for _, row in df.iterrows():
-                point = Point(row['latitude'], row['longitude'])
+                point = Point(row['lat'], row['lon'])
                 if point.within(area_polygon):
                     in_area = True
                     break
@@ -463,10 +463,10 @@ class ShipTrackVisualizer(QMainWindow):
         
         # 绘制筛选后的轨迹
         for ship_id, df in filtered_data.items():
-            ship_type = df['type'].mode()[0] if 'type' in df.columns else 'default'
+            ship_type = df['label'].mode()[0] if 'label' in df.columns else 'default'
             color = color_map.get(ship_type.lower(), color_map['default'])
             
-            points = list(zip(df['latitude'], df['longitude']))
+            points = list(zip(df['lat'], df['lon']))
             folium.PolyLine(
                 points,
                 color=color,
@@ -510,8 +510,8 @@ class ShipTrackVisualizer(QMainWindow):
         
         for df in self.ship_data.values():
             if not df.empty:
-                all_lats.extend(df['latitude'].tolist())
-                all_lons.extend(df['longitude'].tolist())
+                all_lats.extend(df['lat'].tolist())
+                all_lons.extend(df['lon'].tolist())
         
         if not all_lats:
             return [30.0, 120.0]
